@@ -5,7 +5,7 @@ using GestionDeEntradasInventario.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
-namespace GestionEntradasInventario.Services;
+namespace GestionDeEntradasInventario.Services;
 
 public class ProductosService(IDbContextFactory<ApplicationDbContext> factory)
 {
