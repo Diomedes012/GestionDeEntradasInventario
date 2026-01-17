@@ -18,8 +18,4 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Components\Pages\ProductoPages\" />
-  </ItemGroup>
-
 </Project>

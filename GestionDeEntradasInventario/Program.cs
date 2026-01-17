@@ -1,6 +1,7 @@
 using GestionDeEntradasInventario.Components;
 using GestionDeEntradasInventario.Components.Account;
 using GestionDeEntradasInventario.Data;
+using GestionDeEntradasInventario.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,7 @@ public class Program
             .AddIdentityCookies();
 
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-        builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
             options.UseSqlServer(connectionString));
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -43,6 +44,8 @@ public class Program
             .AddDefaultTokenProviders();
 
         builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+        builder.Services.AddScoped<EntradasService>();
 
         var app = builder.Build();
 

@@ -1,0 +1,144 @@
+﻿@page "/Producto/Create"
+@page "/Producto/Edit/{ProductoId:int}"
+
+@using GestionDeEntradasInventario.Services
+@using GestionDeEntradasInventario.Models
+@inject ProductosService productosService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+
+<PageTitle>@titulo</PageTitle>
+
+<EditForm Model="Producto" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header text-center">
+                <h5 class="card-title">@titulo</h5>
+            </div>
+
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mt-3">
+                        <label class="form-label">Producto ID</label>
+                        <InputNumber class="form-control" @bind-Value="Producto.ProductoId" readonly disabled></InputNumber>
+                    </div>
+
+                    <div class="col-md-8 mt-3">
+                        <label class="form-label">Descripción</label>
+                        <InputText class="form-control" @bind-Value="Producto.Descripcion" placeholder="Ej: Arroz 10LB"></InputText>
+                        <ValidationMessage For="@(() => Producto.Descripcion)" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mt-3">
+                        <label class="form-label">Costo</label>
+                        <InputNumber class="form-control" @bind-Value="Producto.Costo"></InputNumber>
+                        <ValidationMessage For="@(() => Producto.Costo)" />
+                    </div>
+
+                    <div class="col-md-4 mt-3">
+                        <label class="form-label">Precio</label>
+                        <InputNumber class="form-control" @bind-Value="Producto.Precio"></InputNumber>
+                        <ValidationMessage For="@(() => Producto.Precio)" />
+                    </div>
+
+                    <div class="col-md-4 mt-3">
+                        <label class="form-label">Existencia</label>
+                        <InputNumber class="form-control bg-light" @bind-Value="Producto.Existencia" disabled></InputNumber>
+                        <small class="text-muted">Gestionado automáticamente</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer text-center">
+                <a href="/Producto/Index" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-floppy"></i> Guardar
+                </button>
+
+                @if(esEdicion)
+                {
+                    <button type="button" @onclick="Eliminar" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int ProductoId { get; set; }
+
+    private Producto Producto { get; set; } = new Producto();
+    private string titulo = "Crear Producto";
+    private bool esEdicion => ProductoId > 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (esEdicion)
+        {
+            titulo = "Editar Producto";
+            var encontrado = await productosService.Buscar(ProductoId);
+            if (encontrado != null)
+            {
+                Producto = encontrado;
+            }
+            else
+            {
+                navigationManager.NavigateTo("/Producto/Create");
+            }
+        }
+        else 
+        {
+            Producto.Existencia = 0; 
+        }
+    }
+
+    private async Task Guardar()
+    {   
+        if (await productosService.ExisteNombre(Producto.Descripcion, Producto.ProductoId))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Error: Ya existe un producto con esa descripción.");
+            return;
+        }
+
+        var guardo = await productosService.Guardar(Producto);
+
+        if (guardo)
+        {
+            navigationManager.NavigateTo("/Producto/Index");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Error al guardar. Verifique los datos.");
+        }
+    }
+
+    private async Task Eliminar()
+    {
+        bool confirmado = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro que desea eliminar este producto?");
+
+        if (confirmado && esEdicion)
+        {
+            var eliminado = await productosService.Eliminar(Producto.ProductoId);
+            
+            if (eliminado)
+            {
+                navigationManager.NavigateTo("/Producto/Index");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No se puede eliminar: El producto ya tiene movimientos (Entradas) asociados.");
+            }
+        }
+    }
+}
