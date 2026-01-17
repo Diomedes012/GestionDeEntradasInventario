@@ -1,0 +1,156 @@
+﻿@page "/Producto/Index"
+@using GestionDeEntradasInventario.Services
+@using GestionDeEntradasInventario.Models
+@inject ProductosService productosService
+@rendermode InteractiveServer
+
+<PageTitle>Index de Productos</PageTitle>
+
+<div class="container">
+    <div class="card shadow-lg">
+        @*Header*@
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title m-0">Inventario de Productos</h5>
+            <a href="/Producto/Create" class="btn btn-primary">
+                <i class="bi bi-plus-square"></i> Crear
+            </a>
+        </div>
+
+        @*Body*@
+        <div class="card-body">
+            @* Filtros *@
+            <div class="row mt-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label"><strong>Filtrar Por: </strong></label>
+                    <InputSelect class="form-select" @bind-Value="Filtro">
+                        <option value="" selected disabled>Elija una opción</option>
+                        <option value="Id">Id</option>
+                        <option value="Descripcion">Descripción</option>
+                    </InputSelect>
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label"><strong>Búsqueda</strong></label>
+                    <div class="input-group">
+                        <input class="form-control" @bind-value="ValorFiltro" placeholder="Buscar..." />
+                        <button type="button" class="btn btn-primary" @onclick="Buscar">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-secondary" @onclick="Restablecer">
+                        <i class="bi bi-arrow-counterclockwise"></i> Restablecer
+                    </button>
+                </div>
+            </div>
+
+            @* Tabla *@
+            <table class="table table-hover mt-4 table-bordered">
+                <thead class="table-striped text-black">
+                    <tr>
+                        <th>Id</th>
+                        <th>Descripción</th>
+                        <th class="text-end">Costo</th>
+                        <th class="text-end">Precio</th>
+                        <th class="text-center">Existencia</th>
+                        <th class="text-center">Editar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var producto in listaProductos)
+                    {
+                        <tr>
+                            <td>@producto.ProductoId</td>
+                            <td>@producto.Descripcion</td>
+                            <td class="text-end">@producto.Costo.ToString("C2")</td>
+                            <td class="text-end">@producto.Precio.ToString("C2")</td>
+
+                            @* Lógica visual para existencia *@
+                            <td class="text-center">
+                                @if (producto.Existencia == 0)
+                                {
+                                    <span class="badge bg-danger">Agotado (0)</span>
+                                }
+                                else if (producto.Existencia <= 5)
+                                {
+                                    <span class="badge bg-warning text-dark">Bajo (@producto.Existencia)</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">@producto.Existencia</span>
+                                }
+                            </td>
+
+                            <td class="text-center">
+                                <a href="/Producto/Edit/@producto.ProductoId" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (listaProductos.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">No se encontraron productos.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @*Footer*@
+        <div class="card-footer">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label"><strong>Total de Productos: </strong>@listaProductos.Count</label>
+                </div>
+                <div class="col-md-6 text-end">
+                    @* Opcional: Mostrar valor del inventario *@
+                    <label class="form-label"><strong>Valor Inventario (Costo): </strong></label>
+                    <span class="badge bg-secondary fs-6">
+                        @listaProductos.Sum(p => p.Existencia * p.Costo).ToString("C2")
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public List<Producto> listaProductos { get; set; } = new List<Producto>();
+    public string Filtro { get; set; } = string.Empty;
+    public string ValorFiltro { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaProductos = await productosService.Listar(p => true);
+    }
+
+    public async Task Buscar()
+    {
+        if (!string.IsNullOrEmpty(ValorFiltro))
+        {
+            if (Filtro == "Id" && int.TryParse(ValorFiltro, out int id))
+            {
+                listaProductos = await productosService.Listar(p => p.ProductoId == id);
+            }
+            else if (Filtro == "Descripcion")
+            {
+                listaProductos = await productosService.Listar(p => p.Descripcion.ToLower().Contains(ValorFiltro.ToLower()));
+            }
+        }
+        else
+        {
+            listaProductos = await productosService.Listar(p => true);
+        }
+    }
+
+    public async Task Restablecer()
+    {
+        listaProductos = await productosService.Listar(p => true);
+        Filtro = string.Empty;
+        ValorFiltro = string.Empty;
+    }
+}
