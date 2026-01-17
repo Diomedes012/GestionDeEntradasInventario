@@ -1,0 +1,174 @@
+﻿@page "/Entrada/Index"
+@using GestionDeEntradasInventario.Services
+@using GestionDeEntradasInventario.Models
+@inject EntradasService entradasService
+@rendermode InteractiveServer
+
+<PageTitle>Index de Entradas</PageTitle>
+
+<div class="container">
+    <div class="card shadow-lg">
+        @*Header*@
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title m-0">Registro de Entradas</h5>
+            <a href="/Entrada/Create" class="btn btn-primary">
+                <i class="bi bi-plus-square"></i> Crear
+            </a>
+        </div>
+
+        @*Body*@
+        <div class="card-body">
+            @* Filtros de Fechas *@
+            <div class="row mt-3">
+                <div class="col-3">
+                    <label class="col-form-label"><strong>Desde</strong></label>
+                    <InputDate class="form-control" @bind-Value="Desde"></InputDate>
+                </div>
+
+                <div class="col-3">
+                    <label class="col-form-label"><strong>Hasta</strong></label>
+                    <InputDate class="form-control" @bind-Value="Hasta"></InputDate>
+                </div>
+            </div>
+
+            @* Filtros Generales *@
+            <div class="row mt-3">
+                <div class="col-3">
+                    <label class="form-label"><strong>Filtrar Por: </strong></label>
+                    <InputSelect class="form-select" @bind-Value="Filtro">
+                        <option value="" selected disabled>Elija una opción</option>
+                        <option value="Id">Id</option>
+                        <option value="Concepto">Concepto</option>
+                        <option value="Total">Total</option>
+                    </InputSelect>
+                </div>
+
+                <div class="col-4">
+                    <label class="form-label"><strong>Búsqueda</strong></label>
+                    <div class="input-group">
+                        <input class="form-control" @bind-value="ValorFiltro" placeholder="Buscar..." />
+                        <button type="button" class="btn btn-primary" @onclick="Buscar">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-secondary" @onclick="Restablecer">
+                        <i class="bi bi-arrow-counterclockwise"></i> Restablecer
+                    </button>
+                </div>
+            </div>
+
+            @* Tabla *@
+            <table class="table table-hover mt-3 table-bordered">
+                <thead class="table-striped text-black">
+                    <tr>
+                        <th>Id</th>
+                        <th>Fecha</th>
+                        <th>Concepto</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-center">Editar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entrada in listaEntradas)
+                    {
+                        <tr>
+                            <td>@entrada.EntradaId</td>
+                            <td>@entrada.Fecha.ToShortDateString()</td>
+                            <td>@entrada.Concepto</td>
+                            <td class="text-end">@entrada.Total.ToString("C2")</td>
+
+                            <td class="text-center">
+                                <a href="/Entrada/Edit/@entrada.EntradaId" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (listaEntradas.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No se encontraron registros.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @*Footer*@
+        <div class="card-footer">
+            <div class="row">
+                <div class="col-md-6 text-start">
+                    <label class="form-label"><strong>Cantidad de Registros: </strong>@listaEntradas.Count</label>
+                </div>
+                <div class="col-md-6 text-end">
+                    <label class="form-label"><strong>Monto Total: </strong></label>
+                    <span class="badge bg-success fs-6">@listaEntradas.Sum(e => e.Total).ToString("C2")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public List<Entrada> listaEntradas { get; set; } = new List<Entrada>();
+    public string Filtro { get; set; } = string.Empty;
+    public string ValorFiltro { get; set; } = string.Empty;
+
+    public DateTime? Desde { get; set; }
+    public DateTime? Hasta { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaEntradas = await entradasService.Listar(p => true);
+    }
+
+    public async Task Buscar()
+    {
+        
+        var listaCompleta = await entradasService.Listar(e => true);
+
+        if (Desde.HasValue)
+        {
+            listaCompleta = listaCompleta.Where(e => e.Fecha.Date >= Desde.Value.Date).ToList();
+        }
+        if (Hasta.HasValue)
+        {
+            DateTime fechaHasta = Hasta.Value.Date.AddDays(1).AddSeconds(-1);
+            listaCompleta = listaCompleta.Where(e => e.Fecha <= fechaHasta).ToList();
+        }
+
+        if (!string.IsNullOrEmpty(Filtro) && !string.IsNullOrEmpty(ValorFiltro))
+        {
+            switch (Filtro)
+            {
+                case "Id":
+                    if (int.TryParse(ValorFiltro, out int id))
+                        listaCompleta = listaCompleta.Where(e => e.EntradaId == id).ToList();
+                    break;
+
+                case "Concepto":
+                    listaCompleta = listaCompleta.Where(e => e.Concepto.Contains(ValorFiltro, StringComparison.OrdinalIgnoreCase)).ToList();
+                    break;
+
+                case "Total":
+                    if (decimal.TryParse(ValorFiltro, out decimal total))
+                        listaCompleta = listaCompleta.Where(e => e.Total == total).ToList();
+                    break;
+            }
+        }
+
+        listaEntradas = listaCompleta;
+    }
+
+    public async Task Restablecer()
+    {
+        listaEntradas = await entradasService.Listar(p => true);
+        Filtro = string.Empty;
+        ValorFiltro = string.Empty;
+        Desde = null;
+        Hasta = null;
+    }
+}
