@@ -16,6 +16,7 @@ public class Entrada
     public string Concepto { get; set; }
 
     [Required(ErrorMessage = "se requiere Total"), Range(0.1, double.MaxValue, ErrorMessage = "Total debe ser mayor a 0")]
+    [Column(TypeName = "decimal(18, 2)")]
     public decimal Total { get; set; }
 
     [InverseProperty("Entrada")]

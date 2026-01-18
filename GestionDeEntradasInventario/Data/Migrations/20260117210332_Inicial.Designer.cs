@@ -4,6 +4,7 @@ using GestionDeEntradasInventario.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestionDeEntradasInventario.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260117210332_Inicial")]
+    partial class Inicial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -109,7 +112,7 @@ namespace GestionDeEntradasInventario.Migrations
 
                     b.HasKey("EntradaId");
 
-                    b.ToTable("Entradas", (string)null);
+                    b.ToTable("Entradas");
                 });
 
             modelBuilder.Entity("GestionDeEntradasInventario.Models.EntradaDetalle", b =>
@@ -138,7 +141,7 @@ namespace GestionDeEntradasInventario.Migrations
 
                     b.HasIndex("ProductoId");
 
-                    b.ToTable("EntradasDetalles", (string)null);
+                    b.ToTable("EntradasDetalles");
                 });
 
             modelBuilder.Entity("GestionDeEntradasInventario.Models.Producto", b =>
@@ -164,7 +167,7 @@ namespace GestionDeEntradasInventario.Migrations
 
                     b.HasKey("ProductoId");
 
-                    b.ToTable("Productos", (string)null);
+                    b.ToTable("Productos");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -404,7 +407,7 @@ namespace GestionDeEntradasInventario.Migrations
 
                             b1.HasKey("IdentityUserPasskeyCredentialId");
 
-                            b1.ToTable("AspNetUserPasskeys", (string)null);
+                            b1.ToTable("AspNetUserPasskeys");
 
                             b1.ToJson("Data");
 

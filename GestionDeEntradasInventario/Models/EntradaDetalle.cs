@@ -18,6 +18,7 @@ public class EntradaDetalle
     public int Cantidad { get; set; }
 
     [Required(ErrorMessage = "Se requiere Costo"), Range(0.1, double.MaxValue, ErrorMessage = "El coste debe ser mayor a 0")]
+    [Column(TypeName = "decimal(18, 2)")]
     public decimal Costo { get; set; }
 
     [ForeignKey("EntradaId")]
